@@ -13,23 +13,28 @@ To get started using the ``comments`` app, follow these steps:
 #. Install the comments framework by adding ``'django_comments'`` to
    :setting:`INSTALLED_APPS`.
 
-#. Run ``manage.py syncdb`` so that Django will create the comment tables.
+#. Run ``manage.py migrate`` so that Django will create the comment tables.
 
 #. Add the comment app's URLs to your project's ``urls.py``:
 
    .. code-block:: python
 
-        urlpatterns = patterns('',
+        urlpatterns = [
             ...
-            (r'^comments/', include('django_comments.urls')),
+            url(r'^comments/', include('django_comments.urls')),
             ...
-        )
+        ]
 
 #. Use the `comment template tags`_ below to embed comments in your
    templates.
 
 You might also want to examine :ref:`the available settings
 <settings-comments>`.
+
+To take full advantage of the moderation system, you may want to add some
+comment-enabling fields to specified models. See :doc:`Comment moderation
+<moderation>` for details.
+
 
 Comment template tags
 =====================
@@ -328,5 +333,5 @@ are not using that, you will need to use the ``csrf_protect`` decorator on any
 views that include the comment form, in order for those views to be able to
 output the CSRF token and cookie.
 
-.. _cross site request forgery protection: https://docs.djangoproject.com/en/1.5/ref/contrib/csrf/
+.. _cross site request forgery protection: https://docs.djangoproject.com/en/stable/ref/csrf/
 .. _honeypot: http://en.wikipedia.org/wiki/Honeypot_(computing)

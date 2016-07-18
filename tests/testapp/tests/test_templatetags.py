@@ -1,21 +1,13 @@
 from __future__ import absolute_import
 
 from django.contrib.contenttypes.models import ContentType
-from django.template import Template, Context, Library, libraries
+from django.template import Template, Context
 
 from django_comments.forms import CommentForm
 from django_comments.models import Comment
 
-from ..models import Article, Author
+from testapp.models import Article, Author
 from . import CommentTestCase
-
-register = Library()
-
-@register.filter
-def noop(variable, param=None):
-    return variable
-
-libraries['comment_testtags'] = register
 
 
 class CommentTemplateTagTests(CommentTestCase):
@@ -86,7 +78,7 @@ class CommentTemplateTagTests(CommentTestCase):
 
     def verifyGetCommentList(self, tag=None):
         c1, c2, c3, c4 = Comment.objects.all()[:4]
-        t = "{% load comments %}" +  (tag or "{% get_comment_list for testapp.author a.id as cl %}")
+        t = "{% load comments %}" + (tag or "{% get_comment_list for testapp.author a.id as cl %}")
         ctx, out = self.render(t, a=Author.objects.get(pk=1))
         self.assertEqual(out, "")
         self.assertEqual(list(ctx["cl"]), [c2])
@@ -162,11 +154,11 @@ class CommentTemplateTagTests(CommentTestCase):
 
         # Clear CT cache
         ContentType.objects.clear_cache()
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(3):
             self.testRenderCommentListFromObject()
 
         # CT's should be cached
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(2):
             self.testRenderCommentListFromObject()
 
         # {% get_comment_list %} --------------------

@@ -6,13 +6,15 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from django_comments import signals
-from django_comments.models import Comment
+from django_comments.models import COMMENT_MAX_LENGTH, Comment
 
 from . import CommentTestCase
-from ..models import Article, Book
+from testapp.models import Article, Book
 
 
-post_redirect_re = re.compile(r'^http://testserver/posted/\?c=(?P<pk>\d+$)')
+# Before Django 1.9, the response contained the scheme/netloc parts
+post_redirect_re = re.compile(r'^(http://testserver)?/posted/\?c=(?P<pk>\d+$)')
+
 
 class CommentViewTests(CommentTestCase):
 
@@ -66,6 +68,15 @@ class CommentViewTests(CommentTestCase):
         data["object_pk"] = 'cookies'
         response = self.client.post("/post/", data)
         self.assertEqual(response.status_code, 400)
+
+    def testPostTooLongComment(self):
+        a = Article.objects.get(pk=1)
+        data = self.getValidData(a)
+        data["comment"] = "X" * (COMMENT_MAX_LENGTH + 1)
+        response = self.client.post("/post/", data)
+        self.assertContains(
+            response, "Ensure this value has at most %d characters" % COMMENT_MAX_LENGTH
+        )
 
     def testCommentPreview(self):
         a = Article.objects.get(pk=1)
@@ -214,7 +225,8 @@ class CommentViewTests(CommentTestCase):
         Test that the comment_will_be_posted signal can prevent the comment from
         actually getting saved
         """
-        def receive(sender, **kwargs): return False
+        def receive(sender, **kwargs):
+            return False
         signals.comment_will_be_posted.connect(receive, dispatch_uid="comment-test")
         a = Article.objects.get(pk=1)
         data = self.getValidData(a)
@@ -229,7 +241,7 @@ class CommentViewTests(CommentTestCase):
         it gets posted
         """
         def receive(sender, **kwargs):
-             # a bad but effective spam filter :)...
+            # a bad but effective spam filter :)...
             kwargs['comment'].is_public = False
 
         signals.comment_will_be_posted.connect(receive)
@@ -244,21 +256,21 @@ class CommentViewTests(CommentTestCase):
         response = self.client.post("/post/", data)
         location = response["Location"]
         match = post_redirect_re.match(location)
-        self.assertTrue(match != None, "Unexpected redirect location: %s" % location)
+        self.assertIsNotNone(match, "Unexpected redirect location: %s" % location)
 
         data["next"] = "/somewhere/else/"
         data["comment"] = "This is another comment"
         response = self.client.post("/post/", data)
         location = response["Location"]
-        match = re.search(r"^http://testserver/somewhere/else/\?c=\d+$", location)
-        self.assertTrue(match != None, "Unexpected redirect location: %s" % location)
+        match = re.search(r"^(http://testserver)?/somewhere/else/\?c=\d+$", location)
+        self.assertIsNotNone(match, "Unexpected redirect location: %s" % location)
 
         data["next"] = "http://badserver/somewhere/else/"
         data["comment"] = "This is another comment with an unsafe next url"
         response = self.client.post("/post/", data)
         location = response["Location"]
         match = post_redirect_re.match(location)
-        self.assertTrue(match != None, "Unsafe redirection to: %s" % location)
+        self.assertIsNotNone(match, "Unsafe redirection to: %s" % location)
 
     def testCommentDoneView(self):
         a = Article.objects.get(pk=1)
@@ -266,7 +278,7 @@ class CommentViewTests(CommentTestCase):
         response = self.client.post("/post/", data)
         location = response["Location"]
         match = post_redirect_re.match(location)
-        self.assertTrue(match != None, "Unexpected redirect location: %s" % location)
+        self.assertIsNotNone(match, "Unexpected redirect location: %s" % location)
         pk = int(match.group('pk'))
         response = self.client.get(location)
         self.assertTemplateUsed(response, "comments/posted.html")
@@ -282,8 +294,8 @@ class CommentViewTests(CommentTestCase):
         data["comment"] = "This is another comment"
         response = self.client.post("/post/", data)
         location = response["Location"]
-        match = re.search(r"^http://testserver/somewhere/else/\?foo=bar&c=\d+$", location)
-        self.assertTrue(match != None, "Unexpected redirect location: %s" % location)
+        match = re.search(r"^(http://testserver)?/somewhere/else/\?foo=bar&c=\d+$", location)
+        self.assertIsNotNone(match, "Unexpected redirect location: %s" % location)
 
     def testCommentPostRedirectWithInvalidIntegerPK(self):
         """
@@ -311,8 +323,8 @@ class CommentViewTests(CommentTestCase):
         data["comment"] = "This is another comment"
         response = self.client.post("/post/", data)
         location = response["Location"]
-        match = re.search(r"^http://testserver/somewhere/else/\?foo=bar&c=\d+#baz$", location)
-        self.assertTrue(match != None, "Unexpected redirect location: %s" % location)
+        match = re.search(r"^(http://testserver)?/somewhere/else/\?foo=bar&c=\d+#baz$", location)
+        self.assertIsNotNone(match, "Unexpected redirect location: %s" % location)
 
         # Without a query string
         a = Article.objects.get(pk=1)
@@ -321,5 +333,5 @@ class CommentViewTests(CommentTestCase):
         data["comment"] = "This is another comment"
         response = self.client.post("/post/", data)
         location = response["Location"]
-        match = re.search(r"^http://testserver/somewhere/else/\?c=\d+#baz$", location)
-        self.assertTrue(match != None, "Unexpected redirect location: %s" % location)
+        match = re.search(r"^(http://testserver)?/somewhere/else/\?c=\d+#baz$", location)
+        self.assertIsNotNone(match, "Unexpected redirect location: %s" % location)

@@ -5,29 +5,30 @@ from xml.etree import ElementTree as ET
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.test.utils import override_settings
 
 from django_comments.models import Comment
 
 from . import CommentTestCase
-from ..models import Article
+from testapp.models import Article
 
 
+@override_settings(ROOT_URLCONF='testapp.urls')
 class CommentFeedTests(CommentTestCase):
-    urls = 'testapp.urls'
     feed_url = '/rss/comments/'
 
     def setUp(self):
-        site_2 = Site.objects.create(id=settings.SITE_ID+1,
+        site_2 = Site.objects.create(id=settings.SITE_ID + 1,
             domain="example2.com", name="example2.com")
         # A comment for another site
-        c5 = Comment.objects.create(
-            content_type = ContentType.objects.get_for_model(Article),
-            object_pk = "1",
-            user_name = "Joe Somebody",
-            user_email = "jsomebody@example.com",
-            user_url = "http://example.com/~joe/",
-            comment = "A comment for the second site.",
-            site = site_2,
+        Comment.objects.create(
+            content_type=ContentType.objects.get_for_model(Article),
+            object_pk="1",
+            user_name="Joe Somebody",
+            user_email="jsomebody@example.com",
+            user_url="http://example.com/~joe/",
+            comment="A comment for the second site.",
+            site=site_2,
         )
 
     def test_feed(self):

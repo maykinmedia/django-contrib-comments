@@ -11,5 +11,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL('ALTER TABLE "django_comments" ALTER COLUMN "object_pk" TYPE integer USING "object_pk"::integer, ALTER COLUMN "object_pk" SET NOT NULL, ALTER COLUMN "object_pk" DROP DEFAULT;')
+        migrations.operations.AlterField(
+            model_name='comment',
+            name='object_pk',
+            field=models.PositiveIntegerField(verbose_name="object ID")
+        )
     ]

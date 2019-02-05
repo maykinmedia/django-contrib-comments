@@ -29,7 +29,7 @@ class BaseCommentAbstractModel(models.Model):
                                      verbose_name=_('content type'),
                                      related_name="content_type_set_for_%(class)s",
                                      on_delete=models.CASCADE)
-    object_pk = models.TextField(_('object ID'))
+    object_pk = models.PositiveIntegerField(_('object ID'))
     content_object = GenericForeignKey(ct_field="content_type", fk_field="object_pk")
 
     # Metadata about the comment

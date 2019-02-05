@@ -9,13 +9,13 @@ with open('HISTORY.rst') as history_file:
 long_description = readme + history
 
 setup(
-    name='django-contrib-comments',
-    version='1.7.1',
-    url="https://github.com/django/django-contrib-comments",
+    name='maykin-django-contrib-comments',
+    version='1.8.0',
+    url="https://github.com/maykinmedia/django-contrib-comments",
     description='The code formerly known as django.contrib.comments.',
     long_description=long_description,
     author='Django Software Foundation',
-    author_email='jacob@jacobian.org',
+    author_email='info@maykinmedia.nl',
     license='BSD',
     platforms='any',
     zip_safe=False,
@@ -40,5 +40,5 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     test_suite='tests.runtests.main',
-    install_requires=['Django>=1.7']
+    install_requires=['Django>=1.8']
 )
